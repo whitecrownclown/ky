@@ -164,6 +164,48 @@ test('custom headers', async t => {
 	await server.close();
 });
 
+test('can extend ky and remove headers', async t => {
+	const server = await createTestServer();
+
+	server.get('/', (request, response) => {
+		response.end(request.headers.unicorn);
+	});
+
+	const myHttp = ky.create({
+		headers: {
+			authorization: 'Bearer TOKEN'
+		}
+	});
+
+	const extendedHttp = myHttp.extend({
+		headers: {
+			authorization: undefined
+		}
+	});
+
+	await myHttp(server.url, {
+		hooks: {
+			beforeRequest: [
+				async request => {
+					t.true(request.headers.has('authorization'));
+				}
+			]
+		}
+	});
+
+	await extendedHttp(server.url, {
+		hooks: {
+			beforeRequest: [
+				async request => {
+					t.false(request.headers.has('authorization'));
+				}
+			]
+		}
+	});
+
+	await server.close();
+});
+
 test('JSON with custom Headers instance', async t => {
 	t.plan(3);
 

@@ -171,6 +171,18 @@ const timeout = (promise, ms, abortController) =>
 
 const normalizeRequestMethod = input => requestMethods.includes(input) ? input.toUpperCase() : input;
 
+const normalizeRequestHeaders = input => {
+	const headers = new globals.Headers(input);
+
+	for (const [key, value] of headers.entries()) {
+		if (typeof value === 'undefined') {
+			headers.delete(key);
+		}
+	}
+
+	return headers;
+};
+
 const defaultRetryOptions = {
 	limit: 2,
 	methods: retryMethods,
@@ -212,6 +224,7 @@ class Ky {
 			// TODO: credentials can be removed when the spec change is implemented in all browsers. Context: https://www.chromestatus.com/feature/4539473312350208
 			credentials: this._input.credentials || 'same-origin',
 			...options,
+			headers: normalizeRequestHeaders(options.headers),
 			hooks: deepMerge({
 				beforeRequest: [],
 				beforeRetry: [],
